@@ -1,0 +1,92 @@
+# Continuous integration for SWARM METER.
+#
+# Mirrors the user-run installer's own validation sequence (install.py
+# validate_stage): build the Lean core for the runner, audit every theorem's
+# axiom list for sorryAx, then run the full application self-test suite
+# offscreen. Lint runs first because it is the cheapest failure.
+#
+# The runner has no GPU and may lack PSI memory-pressure data; the tests use
+# injected fixtures for those paths, so a plain ubuntu runner is sufficient.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Qt renders offscreen in CI but still needs its native client libraries.
+      - name: Install Qt native libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1 libglib2.0-0
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      # The Lean toolchain download (~300 MB) and the core build are cached;
+      # the cache key changes when the pinned toolchain or sources change.
+      - name: Cache Lean toolchain and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elan
+            core/.lake
+          key: lean-${{ hashFiles('core/lean-toolchain', 'core/**/*.lean', 'core/lakefile.toml') }}
+          restore-keys: lean-
+
+      - name: Install elan (Lean toolchain manager)
+        run: |
+          if [ ! -x "$HOME/.elan/bin/lake" ]; then
+            curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+              | sh -s -- -y --default-toolchain none
+          fi
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      # A build that passes IS the proof check; the audit then confirms each
+      # theorem's axiom list is clean (no sorryAx = no admitted gaps).
+      - name: Build Lean core and audit theorem axioms
+        working-directory: core
+        run: |
+          lake build
+          cat > CIAxioms.lean <<'EOF'
+          import Core
+          #print axioms AgentMeter.red_on_time
+          #print axioms AgentMeter.red_on_pressure
+          #print axioms AgentMeter.green_means_room
+          #print axioms AgentMeter.level_monotone
+          #print axioms AgentMeter.redLine_le_amberLine
+          #print axioms AgentMeter.room_sound
+          EOF
+          lake env lean CIAxioms.lean | tee axioms.log
+          if grep -q sorryAx axioms.log; then
+            echo "Axiom audit found sorryAx — a proof is incomplete." >&2
+            exit 1
+          fi
+
+      # Same environment the installer uses to validate a staged install:
+      # offscreen Qt, isolated data directory, the freshly built core, and a
+      # dead D-Bus address so notification tests exercise their fallback.
+      - name: Run application self-tests (full suite)
+        run: |
+          mkdir -p /tmp/swarm-meter-ci-data
+          QT_QPA_PLATFORM=offscreen \
+          SWARM_METER_DATA_DIR=/tmp/swarm-meter-ci-data \
+          SWARM_METER_CORE="$PWD/core/.lake/build/bin/core" \
+          SWARM_METER_CORE_DIR="$PWD/core" \
+          DBUS_SESSION_BUS_ADDRESS="unix:path=/nonexistent/swarm-meter-ci" \
+          python3 swarm_meter.py --selftest

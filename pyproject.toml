@@ -1,0 +1,6 @@
+# Lint configuration only. The application runs from a checkout via run.sh /
+# install.py; it is not built or installed as a Python package.
+[tool.ruff.lint]
+# E731: the benchmark harness assigns three small lambdas deliberately;
+# rewriting them as defs adds noise without clarity. Everything else is clean.
+ignore = ["E731"]

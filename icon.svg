@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- FUTURE GADGET No.21 — SWARM METER. A hive of agent cells in the gadget's
+       magenta phosphor on instrument black; one cell burning red = the warning
+       the gadget exists to give. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a0a16"/><stop offset="1" stop-color="#07040a"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="48" fill="url(#bg)" stroke="#5a2a4e" stroke-width="3"/>
+  <!-- hex cell: flat-top hexagon of radius 26, centre (0,0) -->
+  <g id="cells" filter="url(#glow)" stroke-width="3">
+    <g fill="#ff5fbf" stroke="#ff9ad6">
+      <polygon transform="translate(128,128)" points="26,0 13,22.5 -13,22.5 -26,0 -13,-22.5 13,-22.5" fill="#ff5fbf"/>
+      <polygon transform="translate(128,76)"  points="26,0 13,22.5 -13,22.5 -26,0 -13,-22.5 13,-22.5" fill="#b43f88"/>
+      <polygon transform="translate(173,102)" points="26,0 13,22.5 -13,22.5 -26,0 -13,-22.5 13,-22.5" fill="#b43f88"/>
+      <polygon transform="translate(83,102)"  points="26,0 13,22.5 -13,22.5 -26,0 -13,-22.5 13,-22.5" fill="#b43f88"/>
+      <polygon transform="translate(83,154)"  points="26,0 13,22.5 -13,22.5 -26,0 -13,-22.5 13,-22.5" fill="#7a2c5e"/>
+      <polygon transform="translate(128,180)" points="26,0 13,22.5 -13,22.5 -26,0 -13,-22.5 13,-22.5" fill="#7a2c5e"/>
+    </g>
+    <polygon transform="translate(173,154)" points="26,0 13,22.5 -13,22.5 -26,0 -13,-22.5 13,-22.5" fill="#e0563f" stroke="#ff8a70"/>
+  </g>
+  <!-- headroom arc under the hive: a thin gauge from green through amber to red -->
+  <path d="M 48 222 A 80 80 0 0 1 208 222" fill="none" stroke="#2b1f28" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 48 222 A 80 80 0 0 1 112 146" fill="none" stroke="#43d477" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 112 146 A 80 80 0 0 1 176 160" fill="none" stroke="#ecab3e" stroke-width="8"/>
+  <path d="M 176 160 A 80 80 0 0 1 208 222" fill="none" stroke="#e0563f" stroke-width="8" stroke-linecap="round"/>
+</svg>

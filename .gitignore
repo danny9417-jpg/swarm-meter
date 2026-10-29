@@ -1,0 +1,17 @@
+# Machine-local runtime, measurement and private data are never portfolio source.
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+core/.lake/
+state.json
+history.db*
+widget.log*
+running.json
+.lock
+install-backups/
+outputs/
+*.auth
+.env
